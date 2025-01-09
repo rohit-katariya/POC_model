@@ -332,80 +332,80 @@
 
 
 //------------------------------------------------------------------
-// const tf = require('@tensorflow/tfjs-node');
-// const express = require('express');
-// const path = require('path');
-// const fs = require('fs');
-// const app = express();
-// const PORT = process.env.PORT || 3000;
+const tf = require('@tensorflow/tfjs-node');
+const express = require('express');
+const path = require('path');
+const fs = require('fs');
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-// const wordIndexFilePath = path.join(__dirname, 'model/model.json');
+const wordIndexFilePath = path.join(__dirname, 'model/model.json');
 
-// function loadWordIndex() {
-//     try {
-//         const wordIndexData = fs.readFileSync(wordIndexFilePath);
-//         return JSON.parse(wordIndexData);
-//     } catch (error) {
-//         console.error("Error loading wordIndex:", error);
-//         throw error;
-//     }
-// }
+function loadWordIndex() {
+    try {
+        const wordIndexData = fs.readFileSync(wordIndexFilePath);
+        return JSON.parse(wordIndexData);
+    } catch (error) {
+        console.error("Error loading wordIndex:", error);
+        throw error;
+    }
+}
 
-// async function loadModel() {
-//     try {
-//         const modelPath = path.join(__dirname, 'model', 'model.json');
-//         const model = await tf.loadLayersModel(`file://${modelPath}`);
-//         console.log("Model loaded successfully!");
-//         return model;
-//     } catch (error) {
-//         console.error("Error loading model:", error);
-//         throw error;
-//     }
-// }
+async function loadModel() {
+    try {
+        const modelPath = path.join(__dirname, 'model', 'model.json');
+        const model = await tf.loadLayersModel(`file://${modelPath}`);
+        console.log("Model loaded successfully!");
+        return model;
+    } catch (error) {
+        console.error("Error loading model:", error);
+        throw error;
+    }
+}
 
-// function preprocessText(text, wordIndex) {
-//   const tokenizedText = text
-//       .toLowerCase()                         
-//       .replace(/[^\w\s]/g, '')               
-//       .split(/\s+/)                          
-//       .map(word => wordIndex[word] || 0);    
+function preprocessText(text, wordIndex) {
+  const tokenizedText = text
+      .toLowerCase()                         
+      .replace(/[^\w\s]/g, '')               
+      .split(/\s+/)                          
+      .map(word => wordIndex[word] || 0);    
   
-//   const maxLength = 10;                      
-//   const padding = Array(Math.max(0, maxLength - tokenizedText.length)).fill(0);
-//   const paddedSequence = [...tokenizedText, ...padding].slice(0, maxLength);  maxLength
-//   return tf.tensor2d([paddedSequence]);  
-// }
+  const maxLength = 10;                      
+  const padding = Array(Math.max(0, maxLength - tokenizedText.length)).fill(0);
+  const paddedSequence = [...tokenizedText, ...padding].slice(0, maxLength);  maxLength
+  return tf.tensor2d([paddedSequence]);  
+}
 
 
 
-// async function classifyMessageDynamic(message, model) {
-//   const wordIndex = loadWordIndex(); 
-//   const inputTensor = preprocessText(message, wordIndex);
-//   const prediction = model.predict(inputTensor);
+async function classifyMessageDynamic(message, model) {
+  const wordIndex = loadWordIndex(); 
+  const inputTensor = preprocessText(message, wordIndex);
+  const prediction = model.predict(inputTensor);
 
-//   const predictionData = prediction.dataSync();
-//   console.log('Raw prediction:', predictionData);
+  const predictionData = prediction.dataSync();
+  console.log('Raw prediction:', predictionData);
 
-//   const score = predictionData[0];
-//   console.log(`Message: "${message}"`);
-//   console.log(`Confidence Score: ${score}`);
+  const score = predictionData[0];
+  console.log(`Message: "${message}"`);
+  console.log(`Confidence Score: ${score}`);
 
-//   return score >= 0.5? "Offensive" : "Non-Offensive";
-// }
+  return score >= 0.5? "Offensive" : "Non-Offensive";
+}
 
 
 
-// app.listen(PORT, async () => {
-//     console.log(`Server is running on http://localhost:${PORT}`);
+app.listen(PORT, async () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
 
-//     try {
-//         const model = await loadModel();
+    try {
+        const model = await loadModel();
 
-//         const newMessage = "What a wonderful day";
+        const newMessage = "What a wonderful day";
         
-//         const result = await classifyMessageDynamic(newMessage, model);
-//         console.log(`Result: ${result}`);
-//     } catch (error) {
-//         console.error("Error during prediction:", error);
-//     }
-// });
+        const result = await classifyMessageDynamic(newMessage, model);
+        console.log(`Result: ${result}`);
+    } catch (error) {
+        console.error("Error during prediction:", error);
+    }
+});
