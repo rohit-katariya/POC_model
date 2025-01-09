@@ -295,40 +295,40 @@
 // testWithoutFirebase.js
 
 
-const PORT = process.env.PORT || 3000;
+// const PORT = process.env.PORT || 3000;
 
-const app = require('express')(); 
-const { isOffensiveMessage } = require("./utils/huggingFace");
+// const app = require('express')(); 
+// const { isOffensiveMessage } = require("./utils/huggingFace");
 
-async function simulateChatMessage() {
-  const chatData = {
-    message: "This is a test  message",
-    userId: "user123",
-  };
+// async function simulateChatMessage() {
+//   const chatData = {
+//     message: "This is a test  message",
+//     userId: "user123",
+//   };
 
-  try {
-    console.log("Simulated new message received:", chatData.message);
+//   try {
+//     console.log("Simulated new message received:", chatData.message);
 
-    const isOffensive = await isOffensiveMessage(chatData.message);
+//     const isOffensive = await isOffensiveMessage(chatData.message);
 
-    if (isOffensive) {
-      console.log("Inappropriate message detected:", chatData.message);
-      console.log(`Simulated notification to user ${chatData.userId}: "You cannot send such messages."`);
-      console.log("Simulated message removal.");
-    } else {
-      console.log("Message is clean:", chatData.message);
-    }
-  } catch (error) {
-    console.error("Error processing simulated chat message:", error);
-  }
-}
+//     if (isOffensive) {
+//       console.log("Inappropriate message detected:", chatData.message);
+//       console.log(`Simulated notification to user ${chatData.userId}: "You cannot send such messages."`);
+//       console.log("Simulated message removal.");
+//     } else {
+//       console.log("Message is clean:", chatData.message);
+//     }
+//   } catch (error) {
+//     console.error("Error processing simulated chat message:", error);
+//   }
+// }
 
 
 
-app.listen(PORT, async () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-  simulateChatMessage(); 
-});
+// app.listen(PORT, async () => {
+//   console.log(`Server is running on http://localhost:${PORT}`);
+//   simulateChatMessage(); 
+// });
 
 
 //------------------------------------------------------------------

@@ -1,24 +1,24 @@
-// utils/huggingface.js
-const { HfInference } = require("@huggingface/inference");
-const dotenv = require("dotenv");
+// // utils/huggingface.js
+// const { HfInference } = require("@huggingface/inference");
+// const dotenv = require("dotenv");
 
-dotenv.config();
+// dotenv.config();
 
-const hf = new HfInference("erthererererer");
+// const hf = new HfInference("erthererererer");
 
-async function isOffensiveMessage(message) {
-  try {
-    const result = await hf.textClassification({
-      model: "cardiffnlp/twitter-roberta-base-offensive",
-      inputs: message,
-    });
+// async function isOffensiveMessage(message) {
+//   try {
+//     const result = await hf.textClassification({
+//       model: "cardiffnlp/twitter-roberta-base-offensive",
+//       inputs: message,
+//     });
 
-    const offensiveLabel = result[0]?.label?.toLowerCase();
-    return offensiveLabel === "offensive" || offensiveLabel === "toxic";
-  } catch (error) {
-    console.error("Error analyzing message with Hugging Face:", error);
-    return false;
-  }
-}
+//     const offensiveLabel = result[0]?.label?.toLowerCase();
+//     return offensiveLabel === "offensive" || offensiveLabel === "toxic";
+//   } catch (error) {
+//     console.error("Error analyzing message with Hugging Face:", error);
+//     return false;
+//   }
+// }
 
-module.exports = { isOffensiveMessage };
+// module.exports = { isOffensiveMessage };
