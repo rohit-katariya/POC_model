@@ -1,0 +1,25 @@
+{
+    "swagger": "2.0",
+    "info": {
+      "description": "API Example for Swagger Stats",
+      "version": "1.0.0",
+      "title": "API Example"
+    },
+    "host": "localhost:3000",
+    "basePath": "/",
+    "schemes": ["http"],
+    "paths": {
+      "/": {
+        "get": {
+          "summary": "Welcome route",
+          "description": "Returns a welcome message",
+          "responses": {
+            "200": {
+              "description": "Successful response"
+            }
+          }
+        }
+      }
+    }
+  }
+  
