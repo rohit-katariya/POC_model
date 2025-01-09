@@ -4,7 +4,7 @@ const dotenv = require("dotenv");
 
 dotenv.config();
 
-const hf = new HfInference(process.env.HF_API_KEY);
+const hf = new HfInference("erthererererer");
 
 async function isOffensiveMessage(message) {
   try {
