@@ -341,6 +341,7 @@ const PORT = process.env.PORT || 3000;
 
 const wordIndexFilePath = path.join(__dirname, 'model/model.json');
 
+// Function to load wordIndex
 function loadWordIndex() {
     try {
         const wordIndexData = fs.readFileSync(wordIndexFilePath);
@@ -351,6 +352,7 @@ function loadWordIndex() {
     }
 }
 
+// Function to load the model
 async function loadModel() {
     try {
         const modelPath = path.join(__dirname, 'model', 'model.json');
@@ -363,49 +365,54 @@ async function loadModel() {
     }
 }
 
+// Function to preprocess text for prediction
 function preprocessText(text, wordIndex) {
   const tokenizedText = text
       .toLowerCase()                         
       .replace(/[^\w\s]/g, '')               
       .split(/\s+/)                          
       .map(word => wordIndex[word] || 0);    
-  
+
   const maxLength = 10;                      
   const padding = Array(Math.max(0, maxLength - tokenizedText.length)).fill(0);
-  const paddedSequence = [...tokenizedText, ...padding].slice(0, maxLength);  maxLength
+  const paddedSequence = [...tokenizedText, ...padding].slice(0, maxLength);
+  
   return tf.tensor2d([paddedSequence]);  
 }
 
-
-
+// Function to classify the message dynamically
 async function classifyMessageDynamic(message, model) {
   const wordIndex = loadWordIndex(); 
   const inputTensor = preprocessText(message, wordIndex);
   const prediction = model.predict(inputTensor);
 
   const predictionData = prediction.dataSync();
-//   console.log('Raw prediction:', predictionData);
-
   const score = predictionData[0];
   console.log(`Message: "${message}"`);
   console.log(`Confidence Score: ${score}`);
 
-  return score >= 0.3? "Offensive" : "Non-Offensive";
+  return score >= 0.3 ? "Offensive" : "Non-Offensive";
 }
 
+app.get('/', async (req, res) => {
+    const hardcodedMessage = "What a wonderful day";  // Hardcoded message
 
+    try {
+        const model = await loadModel();
+        const result = await classifyMessageDynamic(hardcodedMessage, model);
+        res.json({ message: hardcodedMessage, classification: result });
+    } catch (error) {
+        console.error("Error during prediction:", error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
 
 app.listen(PORT, async () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 
     try {
-        const model = await loadModel();
-
-        const newMessage = "What a wonderful day";
-        
-        const result = await classifyMessageDynamic(newMessage, model);
-        console.log(`Result: ${result}`);
+        await loadModel();
     } catch (error) {
-        console.error("Error during prediction:", error);
+        console.error("Error loading model on startup:", error);
     }
 });
