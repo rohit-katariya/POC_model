@@ -1,7 +1,11 @@
+const express = require('express');
 const tf = require('@tensorflow/tfjs-node');
 const path = require('path');
 const fs = require('fs');
+const app = express();
+const port = 3000;
 
+app.use(express.json());
 // Step 1: Preprocess Data
 function preprocessData(messages) {
     const vocabSet = new Set();
@@ -22,7 +26,6 @@ function preprocessData(messages) {
     return { tokenizedMessages, wordIndex };
 }
 
-// Step 2: Generate Padded Sequences
 function generatePaddedSequences(tokenizedMessages, wordIndex, maxLength = 10) {
     const sequences = tokenizedMessages.map(tokens => tokens.map(token => wordIndex[token] || 0));
     const paddedSequences = sequences.map(seq => {
@@ -33,7 +36,6 @@ function generatePaddedSequences(tokenizedMessages, wordIndex, maxLength = 10) {
     return paddedSequences;
 }
 
-// Step 3: Train the Model
 async function trainDynamicModel(messages) {
     const { tokenizedMessages, wordIndex } = preprocessData(messages);
     const vocabSize = Object.keys(wordIndex).length + 1; // Include padding token
@@ -48,8 +50,6 @@ async function trainDynamicModel(messages) {
     const model = tf.sequential();
     model.add(tf.layers.embedding({ inputDim: vocabSize, outputDim: 16, inputLength: maxLength }));
     model.add(tf.layers.lstm({ units: 64, returnSequences: false }));
-    // model.add(tf.layers.dropout({ rate: 0.2 }));
-
     model.add(tf.layers.dense({ units: 1, activation: 'sigmoid' }));
 
     model.compile({
@@ -62,15 +62,9 @@ async function trainDynamicModel(messages) {
     await model.fit(xs, ys, {
         epochs: 30,
         validationSplit: 0.2,
-        batchSize: 1, // Adjusted batch size
+        batchSize: 1, 
         shuffle: false,
-        callbacks: {
-            onEpochEnd: (epoch, logs) => {
-                // console.log(`Epoch ${epoch + 1}: Loss = ${logs.loss.toFixed(4)}, Accuracy = ${logs.acc?.toFixed(4)}`);
-            },
-        },
     });
-
 
     console.log("Model trained successfully!");
 
@@ -78,10 +72,8 @@ async function trainDynamicModel(messages) {
     if (!fs.existsSync(savePath)) {
         fs.mkdirSync(savePath);
     }
-    // await model.save(`file://${savePath}`);
-    await model.save(`file://${savePath}`);
-// const loadedModel = await tf.loadLayersModel(`file://${savePath}/model.json`);
 
+    await model.save(`file://${savePath}`);
     console.log(`Model saved to ${savePath}`);
 
     return { model, wordIndex };
@@ -91,16 +83,18 @@ async function trainDynamicModel(messages) {
 async function predictOffensiveLanguage(model, wordIndex, text) {
     const tokens = text.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/);
     const sequence = tokens.map(token => wordIndex[token] || 0);
-    const paddedSequence = [...sequence, ...Array(1000 - sequence.length).fill(0)].slice(0, 10);
+    const paddedSequence = [...sequence, ...Array(10 - sequence.length).fill(0)].slice(0, 10);
     const input = tf.tensor2d([paddedSequence]);
 
     const prediction = await model.predict(input).data();
-    console.log(`Prediction for======> "${text}":`, prediction[0]);
-    // return prediction[0];
+    // console.log(`Prediction for======> "${text}":`, prediction[0]);
+
     return prediction[0] > 0.5 ? "This sentence is offensive" : "This sentence is not offensive";
 }
 
-// Step 5: Example Usage
+
+
+let model, wordIndex;
 (async () => {
     const messages = [
         { text: "This is a bad message", label: 1 },
@@ -111,31 +105,29 @@ async function predictOffensiveLanguage(model, wordIndex, text) {
         { text: "I love this", label: 0 },
         { text: "Horrible experience", label: 1 },
         { text: "Fantastic effort", label: 0 },
-        { text: "This is a bad message", label: 1 },
-        { text: "What a wonderful day", label: 0 },
-        { text: "Terrible things are happening", label: 1 },
-        { text: "Great work everyone", label: 0 },
-      
-        
     ];
 
-
-    try {
-        const { model, wordIndex } = await trainDynamicModel(messages);
-
-        const testText1 = "your code free of error";
-        const result1 = await predictOffensiveLanguage(model, wordIndex, testText1);
-        console.log(result1);
-
-        
-        const testText2 = "A path from a point approximately 330 metres east of the most south westerly corner of 17 Batherton Close, Widnes and approximately 208";
-        const result2 = await predictOffensiveLanguage(model, wordIndex, testText2);
-        console.log(result2);
-    } catch (err) {
-        console.error("Error:", err);
-    }
+    const { model: trainedModel, wordIndex: trainedWordIndex } = await trainDynamicModel(messages);
+    model = trainedModel;
+    wordIndex = trainedWordIndex;
+    console.log('Model loaded and ready for predictions');
 })();
 
+app.get('/', async (req, res) => {
+    const hardcodedText = "This is a bad message";  // Example of a hardcoded text
+
+    try {
+        const prediction = await predictOffensiveLanguage(model, wordIndex, hardcodedText);
+        res.json({ text: hardcodedText, prediction });
+    } catch (error) {
+        console.error("Error:", error);
+        res.status(500).send("Error predicting offensive language.");
+    }
+});
+
+app.listen(port, () => {
+    console.log(`Server is running on http://localhost:${port}`);
+});
 
 
 
