@@ -384,13 +384,13 @@ async function classifyMessageDynamic(message, model) {
   const prediction = model.predict(inputTensor);
 
   const predictionData = prediction.dataSync();
-  console.log('Raw prediction:', predictionData);
+//   console.log('Raw prediction:', predictionData);
 
   const score = predictionData[0];
   console.log(`Message: "${message}"`);
   console.log(`Confidence Score: ${score}`);
 
-  return score >= 0.5? "Offensive" : "Non-Offensive";
+  return score >= 0.3? "Offensive" : "Non-Offensive";
 }
 
 
