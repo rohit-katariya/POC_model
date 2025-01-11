@@ -92,7 +92,6 @@ async function predictOffensiveLanguage(model, wordIndex, text) {
     const input = tf.tensor2d([paddedSequence]);
 
     const prediction = await model.predict(input).data();
-console.log("prediction------------",prediction)
     return prediction[0] > 0.3 ? "This sentence is offensive" : "This sentence is not offensive";
 }
 
