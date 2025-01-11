@@ -6,6 +6,11 @@ const app = express();
 const port = 3000;
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // To parse form data
+
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
 // Step 1: Preprocess Data
 function preprocessData(messages) {
     const vocabSet = new Set();
@@ -87,12 +92,9 @@ async function predictOffensiveLanguage(model, wordIndex, text) {
     const input = tf.tensor2d([paddedSequence]);
 
     const prediction = await model.predict(input).data();
-    // console.log(`Prediction for======> "${text}":`, prediction[0]);
-
-    return prediction[0] > 0.5 ? "This sentence is offensive" : "This sentence is not offensive";
+console.log("prediction------------",prediction)
+    return prediction[0] > 0.3 ? "This sentence is offensive" : "This sentence is not offensive";
 }
-
-
 
 let model, wordIndex;
 (async () => {
@@ -113,12 +115,19 @@ let model, wordIndex;
     console.log('Model loaded and ready for predictions');
 })();
 
-app.get('/', async (req, res) => {
-    const hardcodedText = "This is a bad message";  // Example of a hardcoded text
+// Serve the index page
+app.get('/', (req, res) => {
+    res.render('index', { prediction: null });
+});
+
+// Handle form submission and prediction
+app.post('/predict', async (req, res) => {
+    const userMessage = req.body.message;
 
     try {
-        const prediction = await predictOffensiveLanguage(model, wordIndex, hardcodedText);
-        res.json({ text: hardcodedText, prediction });
+        const prediction = await predictOffensiveLanguage(model, wordIndex, userMessage);
+        console.log("prediction------------",prediction)
+        res.render('index', { prediction: { text: userMessage, prediction } });
     } catch (error) {
         console.error("Error:", error);
         res.status(500).send("Error predicting offensive language.");
@@ -128,8 +137,6 @@ app.get('/', async (req, res) => {
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
 });
-
-
 
 
 
