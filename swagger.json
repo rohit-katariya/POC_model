@@ -1,25 +1,68 @@
 {
-    "swagger": "2.0",
-    "info": {
-      "description": "API Example for Swagger Stats",
-      "version": "1.0.0",
-      "title": "API Example"
+  "swagger": "2.0",
+  "info": {
+    "version": "1.0.0",
+    "title": "API Stats Example",
+    "description": "Swagger Stats Example Integration"
+  },
+  "host": "localhost:3000",
+  "basePath": "/",
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "Welcome message",
+        "description": "Displays a welcome message for the API.",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
     },
-    "host": "localhost:3000",
-    "basePath": "/",
-    "schemes": ["http"],
-    "paths": {
-      "/": {
-        "get": {
-          "summary": "Welcome route",
-          "description": "Returns a welcome message",
-          "responses": {
-            "200": {
-              "description": "Successful response"
+    "/submit": {
+      "post": {
+        "summary": "Submit data",
+        "description": "Endpoint to submit data.",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "John Doe"
+                },
+                "email": {
+                  "type": "string",
+                  "example": "johndoe@example.com"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Data received",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string"
+                },
+                "receivedData": {
+                  "type": "object"
+                }
+              }
             }
           }
         }
       }
     }
   }
-  
+}
