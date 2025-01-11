@@ -341,31 +341,36 @@ const bodyParser = require('body-parser');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const wordIndexFilePath = path.join(__dirname, 'model/model.json');
+const modelDirPath = path.join(__dirname, 'model');
+const modelFilePath = path.join(modelDirPath, 'model.json');
 
-// Set EJS as the templating engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Function to load wordIndex
-function loadWordIndex() {
-    try {
-        const wordIndexData = fs.readFileSync(wordIndexFilePath);
-        return JSON.parse(wordIndexData);
-    } catch (error) {
-        console.error("Error loading wordIndex:", error);
-        throw error;
+async function createModelIfMissing() {
+    if (!fs.existsSync(modelFilePath)) {
+        console.log('Model not found. Creating a new one...');
+        
+        const model = tf.sequential();
+        model.add(tf.layers.dense({ units: 10, inputShape: [10], activation: 'relu' }));
+        model.add(tf.layers.dense({ units: 1, activation: 'sigmoid' }));
+        model.compile({ optimizer: 'adam', loss: 'binaryCrossentropy', metrics: ['accuracy'] });
+
+        if (!fs.existsSync(modelDirPath)) {
+            fs.mkdirSync(modelDirPath);
+        }
+
+        await model.save(`file://${modelDirPath}`);
+        console.log('New model created and saved!');
     }
 }
 
-// Function to load the model
 async function loadModel() {
     try {
-        const modelPath = path.join(__dirname, 'model', 'model.json');
-        const model = await tf.loadLayersModel(`file://${modelPath}`);
+        await createModelIfMissing();
+        const model = await tf.loadLayersModel(`file://${modelFilePath}`);
         console.log("Model loaded successfully!");
         return model;
     } catch (error) {
@@ -374,13 +379,12 @@ async function loadModel() {
     }
 }
 
-// Function to preprocess text for prediction
-function preprocessText(text, wordIndex) {
+function preprocessText(text) {
     const tokenizedText = text
         .toLowerCase()
         .replace(/[^\w\s]/g, '')
         .split(/\s+/)
-        .map(word => wordIndex[word] || 0);
+        .map(word => word.length % 10);
 
     const maxLength = 10;
     const padding = Array(Math.max(0, maxLength - tokenizedText.length)).fill(0);
@@ -389,10 +393,8 @@ function preprocessText(text, wordIndex) {
     return tf.tensor2d([paddedSequence]);
 }
 
-// Function to classify the message dynamically
 async function classifyMessageDynamic(message, model) {
-    const wordIndex = loadWordIndex();
-    const inputTensor = preprocessText(message, wordIndex);
+    const inputTensor = preprocessText(message);
     const prediction = model.predict(inputTensor);
 
     const predictionData = prediction.dataSync();
@@ -403,29 +405,23 @@ async function classifyMessageDynamic(message, model) {
     return score >= 0.3 ? "Offensive" : "Non-Offensive";
 }
 
-// Route to render the input form
 app.get('/', (req, res) => {
     res.render('index', { result: null });
 });
 
-// Route to handle form submission
 app.post('/classify', async (req, res) => {
-    const userMessage = req.body.message;  // Get user input from POST request
+    const userMessage = req.body.message;
+    
 
     try {
         const model = await loadModel();
-        console.log("User Message:", userMessage);
-
         const result = await classifyMessageDynamic(userMessage, model);
-        // res.json({ message: userMessage, classification: result });
         res.render('index', { result, message: userMessage });
-
     } catch (error) {
         console.error("Error during prediction:", error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
-
 
 // Start the server
 app.listen(PORT, () => {
