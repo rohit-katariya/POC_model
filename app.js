@@ -336,10 +336,19 @@ const tf = require('@tensorflow/tfjs-node');
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const bodyParser = require('body-parser');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 const wordIndexFilePath = path.join(__dirname, 'model/model.json');
+
+// Set EJS as the templating engine
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
+// Middleware
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // Function to load wordIndex
 function loadWordIndex() {
@@ -367,52 +376,58 @@ async function loadModel() {
 
 // Function to preprocess text for prediction
 function preprocessText(text, wordIndex) {
-  const tokenizedText = text
-      .toLowerCase()                         
-      .replace(/[^\w\s]/g, '')               
-      .split(/\s+/)                          
-      .map(word => wordIndex[word] || 0);    
+    const tokenizedText = text
+        .toLowerCase()
+        .replace(/[^\w\s]/g, '')
+        .split(/\s+/)
+        .map(word => wordIndex[word] || 0);
 
-  const maxLength = 10;                      
-  const padding = Array(Math.max(0, maxLength - tokenizedText.length)).fill(0);
-  const paddedSequence = [...tokenizedText, ...padding].slice(0, maxLength);
-  
-  return tf.tensor2d([paddedSequence]);  
+    const maxLength = 10;
+    const padding = Array(Math.max(0, maxLength - tokenizedText.length)).fill(0);
+    const paddedSequence = [...tokenizedText, ...padding].slice(0, maxLength);
+
+    return tf.tensor2d([paddedSequence]);
 }
 
 // Function to classify the message dynamically
 async function classifyMessageDynamic(message, model) {
-  const wordIndex = loadWordIndex(); 
-  const inputTensor = preprocessText(message, wordIndex);
-  const prediction = model.predict(inputTensor);
+    const wordIndex = loadWordIndex();
+    const inputTensor = preprocessText(message, wordIndex);
+    const prediction = model.predict(inputTensor);
 
-  const predictionData = prediction.dataSync();
-  const score = predictionData[0];
-  console.log(`Message: "${message}"`);
-  console.log(`Confidence Score: ${score}`);
+    const predictionData = prediction.dataSync();
+    const score = predictionData[0];
+    console.log(`Message: "${message}"`);
+    console.log(`Confidence Score: ${score}`);
 
-  return score >= 0.3 ? "Offensive" : "Non-Offensive";
+    return score >= 0.3 ? "Offensive" : "Non-Offensive";
 }
 
-app.get('/', async (req, res) => {
-    const hardcodedMessage = "What a wonderful day";  // Hardcoded message
+// Route to render the input form
+app.get('/', (req, res) => {
+    res.render('index', { result: null });
+});
+
+// Route to handle form submission
+app.post('/classify', async (req, res) => {
+    const userMessage = req.body.message;  // Get user input from POST request
 
     try {
         const model = await loadModel();
-        const result = await classifyMessageDynamic(hardcodedMessage, model);
-        res.json({ message: hardcodedMessage, classification: result });
+        console.log("User Message:", userMessage);
+
+        const result = await classifyMessageDynamic(userMessage, model);
+        // res.json({ message: userMessage, classification: result });
+        res.render('index', { result, message: userMessage });
+
     } catch (error) {
         console.error("Error during prediction:", error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
 
-app.listen(PORT, async () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
 
-    try {
-        await loadModel();
-    } catch (error) {
-        console.error("Error loading model on startup:", error);
-    }
+// Start the server
+app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
 });
