@@ -1,14 +1,3 @@
-import torch
-
-# # Load the PyTorch model
-# model = torch.load('/home/atpl-4/.llama/checkpoints/Llama3.3-70B-Instruct/consolidated.00.pth', map_location='cpu',weights_only=True)
-
-# # Save model weights as a binary file
-# with open('/home/atpl-4/llama.cpp/scripts/consolidated.00.bin', 'wb') as f:
-#     for param in model.parameters():
-#         param.data.numpy().tofile(f)
-
-
 
 
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
